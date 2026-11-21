@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FK5ZDC — Mont Do (Boulouparis, Nouvelle-Calédonie) | Globe 3D</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #060b14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    #globe-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 60% 46%, rgba(30, 82, 138, 0.56) 0%, rgba(13, 29, 54, 0.9) 54%, #08111e 100%);
+    }
+
+    canvas#globe-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    canvas#globe-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Subtle glass bar & popover for optional inspection without obstructing the globe */
+    .glass-bar {
+      background: rgba(9, 16, 30, 0.52);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .glass-popover {
+      background: rgba(9, 16, 30, 0.84);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    @keyframes pulseDot {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.45);
+        opacity: 0.55;
+      }
+    }
+
+    .beacon-live-dot {
+      animation: pulseDot 2s infinite ease-in-out;
+    }
+
+    .spot-chip {
+      transition: all 0.18s ease;
+    }
+  </style>
+</head>
+<body>
+  <!-- Main responsive widget container (works standalone or inside a blog iframe/section) -->
+  <div id="globe-wrapper" aria-label="Globe terrestre interactif centré sur la balise FK5ZDC au Mont Do, Boulouparis, Nouvelle-Calédonie">
+    <canvas id="globe-canvas"></canvas>
+
+    <!-- Slim non-occluding top bar -->
+    <div class="pointer-events-none absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex items-center justify-between gap-2 z-20">
+      <div class="pointer-events-auto flex items-center gap-2 flex-wrap">
+        <button
+          id="toggle-card-btn"
+          type="button"
+          class="glass-bar rounded-full px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-800/75 transition flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+          aria-expanded="false"
+          aria-controls="beacon-info-card"
+        >
+          <span class="relative flex h-2 w-2">
+            <span class="beacon-live-dot absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+          </span>
+          <span class="font-mono-tech text-emerald-300">FK5ZDC</span>
+          <span class="text-slate-400 hidden sm:inline">· Mont Do · 28,2075 MHz</span>
+          <span id="toggle-label" class="text-[11px] text-slate-300 border-l border-slate-600/70 pl-2">
+            Infos
+          </span>
+        </button>
+
+        <button
+          id="toggle-spots-btn"
+          type="button"
+          class="glass-bar rounded-full px-3 py-1.5 text-xs font-medium text-sky-200 hover:bg-slate-800/75 transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+          aria-expanded="false"
+          aria-controls="reception-spots-card"
+        >
+          <span>Écoutes (<span id="top-spots-count" class="spots-count-mirror">0</span>)</span>
+        </button>
+      </div>
+
+      <div class="pointer-events-auto flex items-center gap-1.5">
+        <button
+          id="center-beacon-btn"
+          type="button"
+          class="glass-bar rounded-full px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-emerald-300 transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+          title="Recentrer la vue sur FK5ZDC — Mont Do"
+        >
+          <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v3m0 14v3M2 12h3m14 0h3"></path>
+          </svg>
+          <span class="hidden sm:inline">Mont Do</span>
+        </button>
+
+        <button
+          id="zoom-in-btn"
+          type="button"
+          class="glass-bar rounded-full w-8 h-8 text-slate-200 hover:text-white transition flex items-center justify-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+          title="Zoomer"
+          aria-label="Zoomer"
+        >+</button>
+
+        <button
+          id="zoom-out-btn"
+          type="button"
+          class="glass-bar rounded-full w-8 h-8 text-slate-200 hover:text-white transition flex items-center justify-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+          title="Dézoomer"
+          aria-label="Dézoomer"
+        >−</button>
+      </div>
+    </div>
+
+    <!-- Hidden by default so the globe is 100% clear; opens on demand -->
+    <aside
+      id="beacon-info-card"
+      class="hidden glass-popover rounded-2xl p-4 w-72 text-slate-100 z-20 fixed top-14 left-3 sm:left-4 text-xs"
+    >
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-mono-tech font-semibold text-emerald-300">FK5ZDC · Mont Do</span>
+        <span class="font-mono-tech text-[11px] text-slate-400">RG38AF</span>
+      </div>
+      <p class="text-slate-300 mb-2.5 leading-relaxed">
+        Boulouparis, Nouvelle-Calédonie (~1&nbsp;020&nbsp;m) · 21,75°S · 166,00°E · 28,2075 MHz.
+      </p>
+      <div class="text-[11px] text-slate-400 border-t border-slate-700/70 pt-2">
+        Glisser pour pivoter · Molette pour zoomer
+      </div>
+    </aside>
+
+    <!-- Hidden by default so the globe is 100% clear; opens on demand -->
+    <aside
+      id="reception-spots-card"
+      class="hidden glass-popover rounded-2xl p-4 w-72 text-slate-100 z-20 fixed top-14 right-3 sm:right-4 text-xs"
+    >
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <span class="font-semibold text-sky-300">
+          Écoutes (<span id="spots-count" class="spots-count-mirror">0</span>)
+        </span>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            class="clear-spot-focus-action hidden px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-200 border border-amber-400/40 text-[10px]"
+          >
+            Tous
+          </button>
+          <button
+            type="button"
+            class="toggle-arcs-action px-2 py-0.5 rounded bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-400/50 text-[10px] font-medium"
+          >
+            Arcs actifs
+          </button>
+        </div>
+      </div>
+      <div id="reception-spots-list" class="max-h-56 overflow-y-auto flex flex-wrap gap-1.5 pr-1"></div>
+    </aside>
+
+    <!-- Subtle non-intrusive status toast -->
+    <div
+      id="status-toast"
+      class="pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 z-30 glass-popover rounded-full px-3.5 py-1.5 text-[11px] text-slate-100 opacity-0 translate-y-2 transition-all duration-200"
+      role="status"
+      aria-live="polite"
+    ></div>
+  </div>
+
+  <script>
+    (() => {
+      // =========================================================================
+      // 1. BEACON COORDINATES, RECEPTION SPOTS & CARTOGRAPHIC DATA
+      // =========================================================================
+      const BEACON = {
+        callsign: 'FK5ZDC',
+        site: 'Mont Do',
+        commune: 'Boulouparis',
+        territory: 'Nouvelle-Calédonie',
+        locator: 'RG38AF',
+        frequency: '28,2075 MHz',
+        band: '10 m',
+        elevation: '~1 020 m',
+        lat: -21.754,
+        lon: 166.000
+      };
+
+      // Liste modifiable des pays, états, provinces et territoires ayant écouté la balise FK5ZDC
+      // Vous pouvez ajouter ou ajuster librement chaque entrée { id, name, regionLabel, category, lat, lon, note }
+      const RECEPTION_SPOTS = [
+        { id: 'nc', name: 'New Caledonia', regionLabel: 'New Caledonia', category: 'Territoire', lat: -22.2758, lon: 166.4580, note: 'FK · Proche propagation' },
+        { id: 'us', name: 'USA', regionLabel: 'United States', category: 'Pays', lat: 37.0902, lon: -95.7129, note: 'W · Amérique du Nord' },
+        { id: 'au', name: 'Australia', regionLabel: 'Australia', category: 'Pays', lat: -33.8688, lon: 151.2093, note: 'VK · Pacifique Sud-Ouest' },
+        { id: 'fr', name: 'France', regionLabel: 'France', category: 'Pays', isEurope: true, lat: 48.8566, lon: 2.3522, note: 'F · Europe de l’Ouest' },
+        { id: 'de', name: 'Germany', regionLabel: 'Germany', category: 'Pays', isEurope: true, lat: 52.5200, lon: 13.4050, note: 'DL · Europe centrale' },
+        { id: 'it', name: 'Italy', regionLabel: 'Italy', category: 'Pays', isEurope: true, lat: 41.9028, lon: 12.4964, note: 'I · Europe du Sud' },
+        { id: 'es', name: 'Spain', regionLabel: 'Spain', category: 'Pays', isEurope: true, lat: 40.4168, lon: -3.7038, note: 'EA · Péninsule ibérique' },
+        { id: 'gb', name: 'United Kingdom', regionLabel: 'United Kingdom', category: 'Pays', isEurope: true, lat: 51.5074, lon: -0.1278, note: 'G · Îles Britanniques' },
+        { id: 'pl', name: 'Poland', regionLabel: 'Poland', category: 'Pays', isEurope: true, lat: 52.2297, lon: 21.0122, note: 'SP · Europe centrale' },
+        { id: 'be', name: 'Belgium', regionLabel: 'Belgium', category: 'Pays', isEurope: true, lat: 50.8503, lon: 4.3517, note: 'ON · Europe de l’Ouest' },
+        { id: 'nz', name: 'New Zealand', regionLabel: 'New Zealand', category: 'Pays', lat: -36.8485, lon: 174.7633, note: 'ZL · Mer de Tasman' },
+        { id: 'jp', name: 'Japan', regionLabel: 'Japan', category: 'Pays', lat: 35.6762, lon: 139.6503, note: 'JA · Ouverture 10 m Nord' },
+        { id: 'cz', name: 'Czech Republic', regionLabel: 'Czech Republic', category: 'Pays', isEurope: true, lat: 50.0755, lon: 14.4378, note: 'OK · Europe centrale' },
+        { id: 'br', name: 'Brazil', regionLabel: 'Brazil', category: 'Pays', lat: -22.9068, lon: -43.1729, note: 'PY · Amérique du Sud' },
+        { id: 'nl', name: 'Netherlands', regionLabel: 'Netherlands', category: 'Pays', isEurope: true, lat: 52.3676, lon: 4.9041, note: 'PA · Europe de l’Ouest' },
+        { id: 'dk', name: 'Denmark', regionLabel: 'Denmark', category: 'Pays', isEurope: true, lat: 55.6761, lon: 12.5683, note: 'OZ · Europe du Nord' },
+        { id: 'ch', name: 'Switzerland', regionLabel: 'Switzerland', category: 'Pays', isEurope: true, lat: 46.9480, lon: 7.4474, note: 'HB9 · Europe alpine' },
+        { id: 'pr', name: 'Puerto Rico', regionLabel: 'Puerto Rico', category: 'Territoire', lat: 18.4655, lon: -66.1057, note: 'KP4 · Caraïbes' },
+        { id: 'uy', name: 'Uruguay', regionLabel: 'Uruguay', category: 'Pays', lat: -34.9011, lon: -56.1645, note: 'CX · Cône Sud' },
+        { id: 'gr', name: 'Greece', regionLabel: 'Greece', category: 'Pays', isEurope: true, lat: 37.9838, lon: 23.7275, note: 'SV · Méditerranée orientale' },
+        { id: 'ca', name: 'Canada', regionLabel: 'Canada', category: 'Pays', lat: 45.4215, lon: -75.6972, note: 'VE · Amérique du Nord' },
+        { id: 'qc', name: 'Quebec', regionLabel: 'Quebec', category: 'Province', lat: 46.8139, lon: -71.2080, note: 'VE2 · Est du Canada' },
+        { id: 'ns', name: 'Nova Scotia', regionLabel: 'Nova Scotia', category: 'Province', lat: 44.6488, lon: -63.5752, note: 'VE1 · Atlantique Nord' },
+        { id: 'bc', name: 'British Columbia', regionLabel: 'British Columbia', category: 'Province', lat: 49.2827, lon: -123.1207, note: 'VE7 · Côte Pacifique Nord' },
+        { id: 'ie', name: 'Ireland', regionLabel: 'Ireland', category: 'Pays', isEurope: true, lat: 53.3498, lon: -6.2603, note: 'EI · Atlantique Nord-Est' },
+        { id: 'cl', name: 'Chile', regionLabel: 'Chile', category: 'Pays', lat: -33.4489, lon: -70.6693, note: 'CE · Pacifique Sud-Est' },
+        { id: 'fi', name: 'Finland', regionLabel: 'Finland', category: 'Pays', isEurope: true, lat: 60.1699, lon: 24.9384, note: 'OH · Europe du Nord' },
+        { id: 'ru', name: 'Russia', regionLabel: 'Russia', category: 'Pays', lat: 55.7558, lon: 37.6173, note: 'UA / R · Eurasie' },
+        { id: 'cn', name: 'China', regionLabel: 'China', category: 'Pays', lat: 39.9042, lon: 116.4074, note: 'BY · Asie de l’Est' },
+        { id: 'ro', name: 'Romania', regionLabel: 'Romania', category: 'Pays', isEurope: true, lat: 44.4268, lon: 26.1025, note: 'YO · Europe du Sud-Est' },
+        { id: 'kr', name: 'South Korea', regionLabel: 'South Korea', category: 'Pays', lat: 37.5665, lon: 126.9780, note: 'HL · Asie de l’Est' },
+        { id: 'mt', name: 'Malta', regionLabel: 'Malta', category: 'Pays', isEurope: true, lat: 35.8989, lon: 14.5146, note: '9H · Méditerranée' },
+        { id: 'at', name: 'Austria', regionLabel: 'Austria', category: 'Pays', isEurope: true, lat: 48.2082, lon: 16.3738, note: 'OE · Europe centrale' },
+        { id: 'rs', name: 'Serbia', regionLabel: 'Serbia', category: 'Pays', isEurope: true, lat: 44.7866, lon: 20.4489, note: 'YT / YU · Balkans' },
+        { id: 'ar', name: 'Argentina', regionLabel: 'Argentina', category: 'Pays', lat: -34.6037, lon: -58.3816, note: 'LU · Amérique du Sud' },
+        { id: 'jm', name: 'Jamaica', regionLabel: 'Jamaica', category: 'Pays', lat: 18.0179, lon: -76.8099, note: '6Y · Caraïbes' },
+        { id: 'pt', name: 'Portugal', regionLabel: 'Portugal', category: 'Pays', isEurope: true, lat: 38.7223, lon: -9.1393, note: 'CT · Atlantique / Europe' },
+        { id: 'pa', name: 'Panama', regionLabel: 'Panama', category: 'Pays', lat: 8.9824, lon: -79.5199, note: 'HP · Amérique centrale' },
+        { id: 'ua', name: 'Ukraine', regionLabel: 'Ukraine', category: 'Pays', isEurope: true, lat: 50.4501, lon: 30.5234, note: 'UT / UR · Europe de l’Est' },
+        { id: 'id', name: 'Indonesia', regionLabel: 'Indonesia', category: 'Pays', lat: -6.2088, lon: 106.8456, note: 'YB · Asie du Sud-Est' },
+        { id: 'bt', name: 'Bhutan', regionLabel: 'Bhutan', category: 'Pays', lat: 27.4728, lon: 89.6390, note: 'A5 · Himalaya' },
+        { id: 'cr', name: 'Costa Rica', regionLabel: 'Costa Rica', category: 'Pays', lat: 9.9281, lon: -84.0907, note: 'TI · Amérique centrale' },
+        { id: 'tr', name: 'Turkey', regionLabel: 'Turkey', category: 'Pays', isEurope: true, lat: 41.0082, lon: 28.9784, note: 'TA · Anatolie / Europe' },
+        { id: 'si', name: 'Slovenia', regionLabel: 'Slovenia', category: 'Pays', isEurope: true, lat: 46.0569, lon: 14.5058, note: 'S5 · Europe centrale' },
+        { id: 'om', name: 'Oman', regionLabel: 'Oman', category: 'Pays', lat: 23.5880, lon: 58.3829, note: 'A4O · Péninsule arabique' },
+        { id: 'pf', name: 'French Polynesia', regionLabel: 'French Polynesia', category: 'Territoire', lat: -17.5516, lon: -149.5585, note: 'FO · Pacifique Sud' },
+        { id: 'mx', name: 'Mexico', regionLabel: 'Mexico', category: 'Pays', lat: 19.4326, lon: -99.1332, note: 'XE · Amérique du Nord' },
+        { id: 'co', name: 'Colombia', regionLabel: 'Colombia', category: 'Pays', lat: 4.7110, lon: -74.0721, note: 'HK · Amérique du Sud' },
+        { id: 'my', name: 'Malaysia', regionLabel: 'Malaysia', category: 'Pays', lat: 3.1390, lon: 101.6869, note: '9M · Asie du Sud-Est' },
+        { id: 'vn', name: 'Vietnam', regionLabel: 'Vietnam', category: 'Pays', lat: 21.0285, lon: 105.8542, note: '3W / XV · Asie du Sud-Est' },
+        { id: 'hr', name: 'Croatia', regionLabel: 'Croatia', category: 'Pays', isEurope: true, lat: 45.8150, lon: 15.9819, note: '9A · Adriatique' },
+        { id: 'gf', name: 'French Guiana', regionLabel: 'French Guiana', category: 'Territoire', lat: 4.9224, lon: -52.3135, note: 'FY · Amérique du Sud' },
+        { id: 'hu', name: 'Hungary', regionLabel: 'Hungary', category: 'Pays', isEurope: true, lat: 47.4979, lon: 19.0402, note: 'HA · Europe centrale' },
+        { id: 'bg', name: 'Bulgaria', regionLabel: 'Bulgaria', category: 'Pays', isEurope: true, lat: 42.6977, lon: 23.3219, note: 'LZ · Balkans' },
+        { id: 'sm', name: 'San Marino', regionLabel: 'San Marino', category: 'Pays', isEurope: true, lat: 43.9424, lon: 12.4578, note: 'T7 · Europe du Sud' },
+        { id: 'do', name: 'Dominican Republic', regionLabel: 'Dominican Republic', category: 'Pays', lat: 18.4861, lon: -69.9312, note: 'HI · Caraïbes' },
+        { id: 'mq', name: 'Martinique', regionLabel: 'Martinique', category: 'Territoire', lat: 14.6415, lon: -61.0242, note: 'FM · Petites Antilles' },
+        { id: 'gp', name: 'Guadeloupe', regionLabel: 'Guadeloupe', category: 'Territoire', lat: 16.2650, lon: -61.5510, note: 'FG · Petites Antilles' },
+        { id: 'il', name: 'Israel', regionLabel: 'Israel', category: 'Pays', lat: 32.0853, lon: 34.7818, note: '4X · Proche-Orient' },
+        { id: 'se', name: 'Sweden', regionLabel: 'Sweden', category: 'Pays', isEurope: true, lat: 59.3293, lon: 18.0686, note: 'SM / SA · Europe du Nord' },
+        { id: 'us-ca', name: 'California', regionLabel: 'California', category: 'État US', lat: 36.7783, lon: -119.4179, note: 'W6 · Côte Pacifique US' },
+        { id: 'us-or', name: 'Oregon', regionLabel: 'Oregon', category: 'État US', lat: 43.8041, lon: -120.5542, note: 'W7 · Nord-Ouest Pacifique' },
+        { id: 'us-hi', name: 'Hawaii', regionLabel: 'Hawaii', category: 'État US', lat: 19.8968, lon: -155.5828, note: 'KH6 · Pacifique Central' },
+        { id: 'us-fl', name: 'Florida', regionLabel: 'Florida', category: 'État US', lat: 27.6648, lon: -81.5158, note: 'W4 · Sud-Est US' },
+        { id: 'us-va', name: 'Virginia', regionLabel: 'Virginia', category: 'État US', lat: 37.4316, lon: -78.6569, note: 'W4 / K4 · Côte Atlantique' },
+        { id: 'us-tx', name: 'Texas', regionLabel: 'Texas', category: 'État US', lat: 31.9686, lon: -99.9018, note: 'W5 · Centre-Sud US' },
+        { id: 'us-nc', name: 'North Carolina', regionLabel: 'North Carolina', category: 'État US', lat: 35.7596, lon: -79.0193, note: 'W4 · Sud-Est US' },
+        { id: 'us-tn', name: 'Tennessee', regionLabel: 'Tennessee', category: 'État US', lat: 35.5175, lon: -86.5804, note: 'W4 · Sud-Est US' },
+        { id: 'us-ut', name: 'Utah', regionLabel: 'Utah', category: 'État US', lat: 39.3210, lon: -111.0937, note: 'W7 · Montagnes Rocheuses' },
+        { id: 'us-il', name: 'Illinois', regionLabel: 'Illinois', category: 'État US', lat: 40.6331, lon: -89.3985, note: 'W9 · Midwest' },
+        { id: 'us-ga', name: 'Georgia', regionLabel: 'Georgia', category: 'État US', lat: 32.1656, lon: -82.9001, note: 'W4 · Sud-Est US' },
+        { id: 'us-wa', name: 'Washington', regionLabel: 'Washington', category: 'État US', lat: 47.7511, lon: -120.7401, note: 'W7 · Nord-Ouest Pacifique' },
+        { id: 'us-ny', name: 'New York', regionLabel: 'New York', category: 'État US', lat: 40.7128, lon: -74.0060, note: 'W2 · Nord-Est US' },
+        { id: 'us-oh', name: 'Ohio', regionLabel: 'Ohio', category: 'État US', lat: 40.4173, lon: -82.9071, note: 'W8 · Midwest' },
+        { id: 'us-mo', name: 'Missouri', regionLabel: 'Missouri', category: 'État US', lat: 37.9643, lon: -91.8318, note: 'W0 · Centre US' },
+        { id: 'us-az', name: 'Arizona', regionLabel: 'Arizona', category: 'État US', lat: 34.0489, lon: -111.0937, note: 'W7 · Sud-Ouest US' },
+        { id: 'us-ma', name: 'Massachusetts', regionLabel: 'Massachusetts', category: 'État US', lat: 42.4072, lon: -71.3824, note: 'W1 · Nouvelle-Angleterre' },
+        { id: 'us-pa', name: 'Pennsylvania', regionLabel: 'Pennsylvania', category: 'État US', lat: 41.2033, lon: -77.1945, note: 'W3 · Nord-Est US' },
+        { id: 'us-wi', name: 'Wisconsin', regionLabel: 'Wisconsin', category: 'État US', lat: 43.7844, lon: -88.7879, note: 'W9 · Midwest' },
+        { id: 'us-ia', name: 'Iowa', regionLabel: 'Iowa', category: 'État US', lat: 41.8780, lon: -93.0977, note: 'W0 · Midwest' },
+        { id: 'us-nm', name: 'New Mexico', regionLabel: 'New Mexico', category: 'État US', lat: 34.5199, lon: -105.8701, note: 'W5 · Sud-Ouest US' },
+        { id: 'us-al', name: 'Alabama', regionLabel: 'Alabama', category: 'État US', lat: 32.3182, lon: -86.9023, note: 'W4 · Sud-Est US' },
+        { id: 'us-mi', name: 'Michigan', regionLabel: 'Michigan', category: 'État US', lat: 44.3148, lon: -85.6024, note: 'W8 · Grands Lacs' },
+        { id: 'us-mn', name: 'Minnesota', regionLabel: 'Minnesota', category: 'État US', lat: 46.7296, lon: -94.6859, note: 'W0 · Haut-Midwest' },
+        { id: 'us-nh', name: 'New Hampshire', regionLabel: 'New Hampshire', category: 'État US', lat: 43.1939, lon: -71.5724, note: 'W1 · Nouvelle-Angleterre' },
+        { id: 'us-ne', name: 'Nebraska', regionLabel: 'Nebraska', category: 'État US', lat: 41.4925, lon: -99.9018, note: 'W0 · Grandes Plaines' },
+        { id: 'us-md', name: 'Maryland', regionLabel: 'Maryland', category: 'État US', lat: 39.0458, lon: -76.6413, note: 'W3 · Côte Atlantique' },
+        { id: 'us-sc', name: 'South Carolina', regionLabel: 'South Carolina', category: 'État US', lat: 33.8361, lon: -81.1637, note: 'W4 · Sud-Est US' },
+        { id: 'us-de', name: 'Delaware', regionLabel: 'Delaware', category: 'État US', lat: 38.9108, lon: -75.5277, note: 'W3 · Côte Atlantique' },
+        { id: 'us-nj', name: 'New Jersey', regionLabel: 'New Jersey', category: 'État US', lat: 40.0583, lon: -74.4057, note: 'W2 · Nord-Est US' },
+        { id: 'us-nv', name: 'Nevada', regionLabel: 'Nevada', category: 'État US', lat: 38.8026, lon: -116.4194, note: 'W7 · Grand Bassin' },
+        { id: 'us-in', name: 'Indiana', regionLabel: 'Indiana', category: 'État US', lat: 40.2672, lon: -86.1349, note: 'W9 · Midwest' },
+        { id: 'us-wv', name: 'West Virginia', regionLabel: 'West Virginia', category: 'État US', lat: 38.5976, lon: -80.4549, note: 'W8 · Appalaches' },
+        { id: 'us-co', name: 'Colorado', regionLabel: 'Colorado', category: 'État US', lat: 39.5501, lon: -105.7821, note: 'W0 · Montagnes Rocheuses' },
+        { id: 'us-ct', name: 'Connecticut', regionLabel: 'Connecticut', category: 'État US', lat: 41.6032, lon: -73.0877, note: 'W1 · Nouvelle-Angleterre' },
+        { id: 'us-id', name: 'Idaho', regionLabel: 'Idaho', category: 'État US', lat: 44.0682, lon: -114.7420, note: 'W7 · Nord-Ouest Pacifique' },
+        { id: 'us-vt', name: 'Vermont', regionLabel: 'Vermont', category: 'État US', lat: 44.5588, lon: -72.5778, note: 'W1 · Nouvelle-Angleterre' },
+        { id: 'us-me', name: 'Maine', regionLabel: 'Maine', category: 'État US', lat: 45.2538, lon: -69.4455, note: 'W1 · Nouvelle-Angleterre' },
+        { id: 'us-la', name: 'Louisiana', regionLabel: 'Louisiana', category: 'État US', lat: 30.9843, lon: -91.9623, note: 'W5 · Golfe du Mexique' }
+      ];
+
+      // Geographic reference markers (lat, lon, label, primary)
+      const GEO_MARKERS = [
+        { lat: BEACON.lat, lon: BEACON.lon, label: 'FK5ZDC · Mont Do', primary: true },
+        { lat: -21.8600, lon: 166.0500, label: 'Boulouparis', primary: false, regional: true },
+        { lat: -22.2758, lon: 166.4580, label: 'Nouméa', primary: false, regional: true },
+        { lat: -21.5600, lon: 165.8300, label: 'Bourail', primary: false, regional: true },
+        { lat: -20.9043, lon: 164.5863, label: 'Koné', primary: false, regional: true },
+        { lat: -20.8833, lon: 167.2667, label: 'Lifou', primary: false, regional: true },
+        { lat: -20.5700, lon: 166.5300, label: 'Ouvéa', primary: false, regional: true },
+        { lat: -21.1300, lon: 167.9800, label: 'Maré', primary: false, regional: true },
+        { lat: -22.6600, lon: 167.4700, label: 'Île des Pins', primary: false, regional: true },
+        { lat: -25.2744, lon: 133.7751, label: 'Australie', primary: false, regional: false },
+        { lat: -40.9006, lon: 174.8860, label: 'Nouvelle-Zélande', primary: false, regional: false },
+        { lat: -17.7134, lon: 178.0650, label: 'Fidji', primary: false, regional: false },
+        { lat: -17.7333, lon: 168.3273, label: 'Vanuatu', primary: false, regional: false },
+        { lat: -21.3000, lon: 165.4500, label: 'Chaîne Centrale', primary: false, regional: true, feature: 'relief' },
+        { lat: -21.7540, lon: 166.0000, label: 'Mont Do · ~1 020 m', primary: false, regional: true, feature: 'peak' },
+        { lat: -22.1200, lon: 166.2200, label: 'Dumbéa / Tontouta', primary: false, regional: true }
+      ];
+
+      // Subtle cartographic relief bands & hydrographic lines (mountain ridges & major rivers)
+      const RELIEF_RIDGES = [
+        // New Caledonia Chaîne Centrale spine (NW to SE)
+        [
+          [164.15, -20.42], [164.55, -20.75], [164.95, -21.05],
+          [165.42, -21.38], [165.98, -21.74], [166.45, -22.05]
+        ],
+        // Great Dividing Range (Eastern Australia)
+        [
+          [145.5, -16.8], [146.8, -19.5], [148.6, -23.0],
+          [150.5, -28.0], [149.2, -33.5], [147.8, -36.5]
+        ],
+        // Southern Alps (New Zealand South Island)
+        [
+          [171.8, -41.8], [170.6, -43.4], [169.3, -44.8], [168.0, -45.9]
+        ]
+      ];
+
+      const HYDRO_RIVERS = [
+        // Murray-Darling basin (Australia)
+        [
+          [147.5, -35.8], [145.2, -35.5], [142.2, -34.4], [139.6, -34.2]
+        ],
+        // La Tontouta / Dumbéa / La Foa regional hydro axis around Boulouparis & Mont Do
+        [
+          [165.72, -21.64], [165.94, -21.82], [166.12, -21.98]
+        ]
+      ];
+
+      // Detailed continent, peninsula & island polygons [ [lon, lat], ... ]
+      // High-definition cartographic contours with extra vertices around New Caledonia & South Pacific
+      const FALLBACK_LAND_POLYGONS = [
+        // New Caledonia Grande Terre (detailed NW-to-SE coastline, bays, peninsulas & Boulouparis/Mont Do sector)
+        [
+          [163.62, -19.98], [163.92, -20.14], [164.22, -20.36], [164.48, -20.58],
+          [164.72, -20.78], [164.96, -20.96], [165.18, -21.12], [165.38, -21.28],
+          [165.58, -21.46], [165.78, -21.62], [165.98, -21.78], [166.16, -21.92],
+          [166.34, -22.04], [166.52, -22.16], [166.72, -22.26], [166.92, -22.34],
+          [167.02, -22.42], [166.86, -22.54], [166.66, -22.48], [166.44, -22.36],
+          [166.22, -22.22], [165.98, -22.05], [165.76, -21.86], [165.54, -21.68],
+          [165.32, -21.50], [165.10, -21.32], [164.86, -21.14], [164.62, -20.94],
+          [164.38, -20.74], [164.14, -20.54], [163.88, -20.32], [163.64, -20.14]
+        ],
+        // Île des Pins (southeast of Grande Terre)
+        [
+          [167.38, -22.56], [167.56, -22.58], [167.58, -22.71], [167.41, -22.72]
+        ],
+        // Bélep Islands (northwest tip)
+        [
+          [163.54, -19.68], [163.72, -19.74], [163.66, -19.86], [163.48, -19.80]
+        ],
+        // Loyalty Islands: Ouvéa
+        [
+          [166.36, -20.38], [166.58, -20.48], [166.66, -20.62], [166.54, -20.72],
+          [166.38, -20.62], [166.28, -20.48]
+        ],
+        // Loyalty Islands: Lifou
+        [
+          [167.02, -20.72], [167.28, -20.78], [167.44, -20.94], [167.36, -21.18],
+          [167.14, -21.24], [166.98, -21.02]
+        ],
+        // Loyalty Islands: Maré
+        [
+          [167.78, -21.34], [168.08, -21.40], [168.16, -21.56], [167.98, -21.68],
+          [167.74, -21.58]
+        ],
+        // Australia (refined coastline with gulfs, Cape York, Top End, Pilbara, Leeuwin & SE coast)
+        [
+          [113.5, -22.0], [114.1, -23.8], [113.8, -25.8], [114.6, -27.7],
+          [115.0, -30.2], [115.3, -32.2], [115.0, -34.3], [116.8, -35.1],
+          [119.5, -34.5], [122.2, -33.9], [125.8, -32.9], [129.0, -31.8],
+          [131.5, -31.6], [133.6, -32.3], [135.4, -34.2], [136.1, -35.0],
+          [137.4, -34.4], [138.4, -35.5], [139.8, -36.5], [141.2, -38.1],
+          [143.8, -38.6], [146.4, -39.0], [148.6, -37.8], [150.2, -36.8],
+          [151.3, -33.9], [152.9, -31.4], [153.6, -28.2], [152.8, -25.2],
+          [150.8, -22.6], [148.8, -20.3], [146.6, -18.8], [145.3, -15.6],
+          [142.6, -11.0], [141.6, -12.8], [141.8, -15.8], [139.5, -17.5],
+          [136.8, -15.2], [135.6, -12.3], [132.4, -11.4], [130.6, -12.5],
+          [129.2, -14.8], [126.2, -14.1], [123.5, -16.4], [122.2, -17.8],
+          [119.4, -20.1], [116.6, -20.8]
+        ],
+        // Tasmania
+        [
+          [144.7, -40.8], [146.5, -41.1], [148.3, -41.0], [148.2, -42.9],
+          [147.0, -43.5], [145.2, -43.4], [144.6, -42.0]
+        ],
+        // New Zealand: North Island
+        [
+          [172.6, -34.4], [173.8, -35.1], [174.8, -35.3], [175.8, -36.8],
+          [176.2, -37.6], [178.5, -37.7], [178.1, -39.2], [177.2, -40.5],
+          [175.2, -41.5], [173.9, -40.7], [174.2, -39.1], [173.7, -37.6],
+          [172.7, -36.3]
+        ],
+        // New Zealand: South Island
+        [
+          [170.9, -40.6], [172.8, -40.9], [174.1, -41.5], [173.5, -43.2],
+          [172.7, -44.2], [170.8, -45.8], [168.4, -46.5], [166.6, -45.6],
+          [167.4, -44.2], [169.3, -42.4]
+        ],
+        // Papua New Guinea & Bismarck Archipelago
+        [
+          [130.5, -1.5], [133.5, -2.5], [135.5, -3.2], [138.5, -2.7],
+          [141.0, -2.6], [143.8, -3.5], [146.2, -5.2], [147.8, -7.2],
+          [149.8, -8.8], [150.7, -10.2], [148.4, -10.6], [145.8, -8.7],
+          [142.2, -8.4], [138.6, -7.4], [136.2, -5.2], [133.2, -3.8],
+          [131.2, -2.4]
+        ],
+        [
+          [149.2, -4.4], [151.6, -4.2], [152.5, -5.6], [150.2, -6.2]
+        ],
+        // Solomon Islands & Vanuatu
+        [
+          [155.6, -5.2], [157.8, -7.2], [160.5, -9.2], [162.3, -10.5],
+          [161.6, -10.7], [159.5, -9.5], [157.1, -7.6], [155.3, -5.7]
+        ],
+        [
+          [166.4, -14.6], [167.3, -15.5], [168.5, -16.8], [169.5, -18.5],
+          [169.8, -19.6], [169.1, -19.8], [168.1, -17.8], [166.9, -16.2],
+          [166.1, -15.0]
+        ],
+        // Fiji (Viti Levu & Vanua Levu)
+        [
+          [177.0, -17.4], [178.6, -17.5], [178.7, -18.2], [177.2, -18.2]
+        ],
+        [
+          [178.3, -16.3], [179.9, -16.5], [179.6, -17.0], [178.2, -16.8]
+        ],
+        // Maritime Southeast Asia (Sumatra, Java, Kalimantan, Sulawesi)
+        [
+          [95.4, 5.5], [98.2, 3.6], [100.8, 0.8], [104.6, -2.8],
+          [106.0, -5.7], [103.2, -5.8], [100.2, -2.4], [97.2, 1.8]
+        ],
+        [
+          [105.5, -6.6], [108.8, -6.8], [112.4, -7.4], [114.5, -8.5],
+          [113.8, -8.7], [109.5, -7.8], [105.8, -7.0]
+        ],
+        [
+          [109.0, -1.8], [111.5, 1.4], [115.5, 2.2], [118.8, 1.2],
+          [117.6, -2.8], [114.6, -4.1], [111.2, -3.2]
+        ],
+        [
+          [119.2, -0.8], [122.5, 1.2], [125.1, 1.6], [123.4, -0.4],
+          [121.8, -3.5], [120.2, -5.4], [119.4, -3.2]
+        ],
+        // Asia (detailed mainland, peninsulas & islands)
+        [
+          [60.0, 25.0], [68.0, 23.5], [72.6, 20.5], [73.2, 17.5],
+          [75.8, 12.8], [77.5, 8.2], [79.8, 9.5], [80.3, 13.2],
+          [84.5, 17.5], [88.2, 21.8], [91.8, 21.5], [94.5, 17.8],
+          [97.6, 16.5], [98.8, 12.2], [100.2, 7.5], [103.5, 1.4],
+          [101.8, 4.2], [101.2, 10.2], [100.5, 13.5], [103.8, 10.5],
+          [106.8, 10.4], [109.2, 13.2], [108.2, 18.5], [107.2, 21.3],
+          [110.5, 21.4], [114.2, 22.5], [117.5, 24.5], [120.5, 27.8],
+          [121.8, 31.2], [122.4, 35.2], [119.8, 36.2], [121.5, 38.8],
+          [125.2, 39.8], [126.4, 35.1], [129.3, 35.3], [129.5, 37.8],
+          [128.2, 41.2], [131.5, 42.8], [135.5, 44.2], [140.5, 51.5],
+          [143.2, 54.0], [156.5, 51.2], [160.8, 55.2], [163.2, 59.8],
+          [170.5, 66.2], [178.5, 66.5], [162.0, 69.5], [140.0, 71.2],
+          [105.0, 76.2], [72.0, 72.2], [55.0, 68.2], [42.0, 65.2],
+          [36.0, 55.2], [35.0, 42.2], [27.0, 41.0], [35.5, 36.5],
+          [35.5, 31.5], [43.0, 29.5], [51.0, 29.5], [56.5, 26.0],
+          [59.5, 22.5], [54.0, 16.5], [43.5, 12.8], [39.0, 21.0],
+          [34.0, 28.0]
+        ],
+        // Japan (Honshu, Hokkaido, Kyushu)
+        [
+          [130.5, 31.4], [131.8, 33.2], [134.5, 33.8], [136.8, 34.6],
+          [139.8, 35.2], [140.8, 36.2], [141.6, 39.8], [141.2, 41.5],
+          [139.8, 39.8], [136.5, 37.1], [133.2, 35.5], [130.8, 33.8]
+        ],
+        [
+          [140.2, 41.6], [143.2, 42.2], [145.6, 43.4], [144.8, 45.2],
+          [141.6, 45.4], [140.4, 43.2]
+        ],
+        // Africa
+        [
+          [-17.0, 14.5], [-17.5, 21.0], [-13.0, 28.0], [-5.5, 35.8],
+          [10.5, 37.0], [11.5, 33.5], [25.0, 31.5], [32.5, 31.2],
+          [34.5, 27.0], [41.5, 14.5], [51.2, 11.8], [49.0, 6.0],
+          [41.5, -1.5], [40.5, -10.5], [35.5, -19.5], [32.8, -26.5],
+          [27.8, -33.2], [18.4, -34.3], [16.4, -28.5], [14.5, -22.5],
+          [11.8, -16.5], [13.2, -7.5], [8.8, 1.0], [9.5, 4.5],
+          [4.0, 6.2], [-4.0, 5.2], [-8.0, 4.5], [-13.5, 9.5]
+        ],
+        // Madagascar
+        [
+          [43.5, -12.5], [49.5, -12.2], [50.2, -16.5], [47.5, -24.8],
+          [44.2, -25.0], [43.5, -19.5]
+        ],
+        // Europe
+        [
+          [-9.2, 38.7], [-9.0, 43.5], [-2.0, 43.5], [-4.5, 48.2],
+          [1.8, 51.0], [4.5, 52.0], [8.5, 54.5], [8.2, 57.0],
+          [10.5, 57.7], [12.0, 54.5], [18.5, 54.5], [24.0, 56.0],
+          [24.5, 59.5], [29.8, 60.2], [25.0, 65.5], [18.0, 68.5],
+          [28.0, 71.0], [15.0, 68.0], [5.0, 60.5], [5.5, 58.8],
+          [-2.0, 57.5], [-5.8, 54.5], [-10.2, 52.0], [-6.2, 50.2],
+          [-1.5, 50.5], [2.0, 48.8], [3.0, 42.5], [0.5, 40.5],
+          [-5.5, 36.0]
+        ],
+        // Greenland
+        [
+          [-44.0, 60.0], [-51.5, 64.0], [-53.0, 70.0], [-68.0, 76.5],
+          [-58.0, 81.5], [-22.0, 81.5], [-18.5, 76.0], [-25.0, 70.0],
+          [-42.0, 65.0]
+        ],
+        // North America
+        [
+          [-166.0, 54.5], [-162.0, 58.0], [-152.0, 59.5], [-140.0, 60.0],
+          [-132.0, 55.0], [-125.0, 49.0], [-124.2, 40.0], [-117.2, 32.5],
+          [-110.0, 24.0], [-105.5, 20.5], [-97.0, 18.5], [-91.5, 14.5],
+          [-83.5, 10.0], [-78.5, 8.2], [-81.5, 15.0], [-87.0, 21.2],
+          [-90.5, 29.0], [-97.0, 26.0], [-82.5, 25.0], [-80.2, 26.5],
+          [-81.2, 31.5], [-75.5, 35.2], [-70.5, 41.5], [-66.5, 44.5],
+          [-60.0, 46.5], [-53.0, 47.5], [-56.0, 51.5], [-64.0, 58.5],
+          [-65.0, 63.0], [-78.0, 62.5], [-82.0, 55.0], [-94.0, 58.5],
+          [-110.0, 68.5], [-135.0, 69.5], [-162.0, 68.0], [-168.0, 65.5]
+        ],
+        // South America
+        [
+          [-77.5, 8.2], [-71.5, 11.8], [-62.0, 10.5], [-50.0, 1.5],
+          [-44.5, -2.5], [-35.0, -5.8], [-38.5, -13.0], [-40.5, -20.5],
+          [-48.5, -25.5], [-53.5, -33.5], [-62.0, -39.0], [-65.5, -43.5],
+          [-67.5, -51.5], [-68.5, -55.0], [-74.5, -52.5], [-73.5, -42.0],
+          [-71.5, -33.0], [-70.5, -18.5], [-77.0, -12.0], [-81.0, -5.0],
+          [-79.5, 1.5]
+        ],
+        // Antarctica (detailed coastal edge)
+        [
+          [-180.0, -70.0], [-150.0, -73.0], [-120.0, -74.0], [-90.0, -72.5],
+          [-62.0, -64.5], [-45.0, -76.0], [-15.0, -70.5], [15.0, -70.0],
+          [45.0, -68.0], [75.0, -68.5], [105.0, -66.5], [135.0, -66.2],
+          [165.0, -71.5], [180.0, -71.0], [180.0, -90.0], [-180.0, -90.0]
+        ]
+      ];
+
+      // Active coastline polygons: starts with high-detail fallback and upgrades seamlessly with 50m TopoJSON
+      let activeLandPolygons = FALLBACK_LAND_POLYGONS.map((ring) => ({
+        coords: ring,
+        isNewCaledonia: false,
+        areaHint: 1
+      }));
+
+      function classifyPolygon(ring) {
+        let minLon = Infinity;
+        let maxLon = -Infinity;
+        let minLat = Infinity;
+        let maxLat = -Infinity;
+        for (let i = 0; i < ring.length; i++) {
+          const [lon, lat] = ring[i];
+          if (lon < minLon) minLon = lon;
+          if (lon > maxLon) maxLon = lon;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        }
+        const isNC =
+          minLon >= 162.8 &&
+          maxLon <= 168.6 &&
+          minLat >= -23.2 &&
+          maxLat <= -19.3;
+        const span = Math.max(0.05, (maxLon - minLon) * (maxLat - minLat));
+        return {
+          coords: ring,
+          isNewCaledonia: isNC,
+          areaHint: span
+        };
+      }
+
+      function extractRingsFromGeoJson(geojson) {
+        const rings = [];
+        const walkGeometry = (geom) => {
+          if (!geom) return;
+          if (geom.type === 'Polygon') {
+            if (Array.isArray(geom.coordinates) && geom.coordinates.length > 0) {
+              rings.push(classifyPolygon(geom.coordinates[0]));
+            }
+          } else if (geom.type === 'MultiPolygon') {
+            if (Array.isArray(geom.coordinates)) {
+              for (const polyCoords of geom.coordinates) {
+                if (Array.isArray(polyCoords) && polyCoords.length > 0) {
+                  rings.push(classifyPolygon(polyCoords[0]));
+                }
+              }
+            }
+          } else if (geom.type === 'GeometryCollection' && Array.isArray(geom.geometries)) {
+            for (const sub of geom.geometries) walkGeometry(sub);
+          }
+        };
+
+        if (geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+          for (const feat of geojson.features) walkGeometry(feat.geometry);
+        } else if (geojson.type === 'Feature') {
+          walkGeometry(geojson.geometry);
+        } else {
+          walkGeometry(geojson);
+        }
+        return rings;
+      }
+
+      /**
+       * Loads high-resolution 50m coastline polygons from World Atlas TopoJSON via CDN,
+       * while keeping the immediate high-precision fallback polygons active offline or on error.
+       */
+      async function upgradeCoastlineResolution() {
+        if (!window.topojson || typeof window.topojson.feature !== 'function') {
+          return;
+        }
+        const sources = [
+          'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json',
+          'https://unpkg.com/world-atlas@2/land-50m.json'
+        ];
+
+        for (const url of sources) {
+          try {
+            const resp = await fetch(url, { mode: 'cors' });
+            if (!resp.ok) continue;
+            const topo = await resp.json();
+            const objKey = topo.objects && (topo.objects.land || topo.objects.countries);
+            if (!objKey) continue;
+
+            const geojson = window.topojson.feature(topo, objKey);
+            const highResRings = extractRingsFromGeoJson(geojson);
+            if (highResRings.length > 20) {
+              // Merge high-res global/regional coastlines with custom New Caledonia/Loyalty detail rings
+              const customNCRings = FALLBACK_LAND_POLYGONS.slice(0, 6).map((ring) => ({
+                coords: ring,
+                isNewCaledonia: true,
+                areaHint: 0.4
+              }));
+              activeLandPolygons = [...highResRings, ...customNCRings];
+              showToast('Cartographie HD 50m chargée · Trait de côte affiné');
+              return;
+            }
+          } catch (_) {
+            // Keep high-detail fallback dataset silently on network restriction
+          }
+        }
+      }
+
+      // =========================================================================
+      // 2. DOM ELEMENTS & STATE
+      // =========================================================================
+      const canvas = document.getElementById('globe-canvas');
+      const ctx = canvas.getContext('2d');
+      const wrapper = document.getElementById('globe-wrapper');
+      const toggleBtn = document.getElementById('toggle-card-btn');
+      const toggleSpotsBtn = document.getElementById('toggle-spots-btn');
+      const toggleLabel = document.getElementById('toggle-label');
+      const infoCard = document.getElementById('beacon-info-card');
+      const spotsCard = document.getElementById('reception-spots-card');
+      const centerBtn = document.getElementById('center-beacon-btn');
+      const zoomInBtn = document.getElementById('zoom-in-btn');
+      const zoomOutBtn = document.getElementById('zoom-out-btn');
+      const toastEl = document.getElementById('status-toast');
+      const spotsListEl = document.getElementById('reception-spots-list');
+      const spotsListMobileEl = document.querySelector('.reception-spots-list-mobile');
+      const spotsCountEl = document.getElementById('spots-count');
+      const topSpotsCountEl = document.getElementById('top-spots-count');
+      const spotsCountMirrors = document.querySelectorAll('.spots-count-mirror');
+      const toggleArcsBtns = document.querySelectorAll('.toggle-arcs-action');
+      const clearSpotFocusBtns = document.querySelectorAll('.clear-spot-focus-action');
+      const DEG2RAD = Math.PI / 180;
+
+      function getTargetAnglesForBeacon(latDeg, lonDeg) {
+        return {
+          rotY: -(lonDeg + 90) * DEG2RAD,
+          rotX: latDeg * DEG2RAD
+        };
+      }
+
+      const initialTarget = getTargetAnglesForBeacon(BEACON.lat, BEACON.lon);
+
+      const state = {
+        width: 0,
+        height: 0,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+
+        // Current & target spherical rotation (radians)
+        rotY: initialTarget.rotY,
+        rotX: initialTarget.rotX,
+        targetRotY: initialTarget.rotY,
+        targetRotX: initialTarget.rotX,
+        isRecentering: false,
+
+        // Angular velocity for smooth inertia after dragging
+        velY: 0,
+        velX: 0,
+
+        // Zoom factor (1.0 = default fit, > 1 = zoomed in, < 1 = zoomed out)
+        zoom: 1.08,
+        targetZoom: 1.08,
+        minZoom: 0.68,
+        maxZoom: 3.4,
+
+        // Subtle pointer parallax offset (normalized -1..1)
+        pointerNormX: 0,
+        pointerNormY: 0,
+        smoothPointerX: 0,
+        smoothPointerY: 0,
+
+        // Drag & touch tracking
+        isDragging: false,
+        lastPointerX: 0,
+        lastPointerY: 0,
+        pinchStartDist: null,
+        pinchStartZoom: 1,
+
+        // Subtle idle oscillation when not dragging (keeps globe lively while staying anchored near Mont Do)
+        autoDrift: true,
+        time: 0,
+
+        // Great-circle reception arcs state
+        showArcs: true,
+        selectedSpotId: null
+      };
+
+      function renderSpotsListUI() {
+        if (!spotsListEl || !spotsCountEl) return;
+        spotsCountEl.textContent = String(RECEPTION_SPOTS.length);
+        spotsListEl.innerHTML = '';
+
+        for (const spot of RECEPTION_SPOTS) {
+          const isSelected = state.selectedSpotId === spot.id;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `spot-chip text-[11px] px-2 py-1 rounded-lg border font-medium flex items-center gap-1 ${
+            isSelected
+              ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
+              : 'bg-slate-800/75 border-slate-700/80 text-slate-200 hover:border-sky-400/50 hover:text-sky-200'
+          }`;
+          btn.title = `${spot.name} (${spot.category}) — ${spot.note}`;
+          btn.innerHTML = `
+            <span class="h-1.5 w-1.5 rounded-full ${spot.category === 'État US' ? 'bg-sky-400' : 'bg-emerald-400'}"></span>
+            <span>${spot.name}</span>
+          `;
+
+          btn.addEventListener('click', () => {
+            if (state.selectedSpotId === spot.id) {
+              state.selectedSpotId = null;
+              clearSpotFocusBtns.forEach((b) => b.classList.add('hidden'));
+              renderSpotsListUI();
+              showToast('Affichage de tous les arcs de réception');
+              return;
+            }
+            state.selectedSpotId = spot.id;
+            clearSpotFocusBtns.forEach((b) => b.classList.remove('hidden'));
+            renderSpotsListUI();
+            const target = getTargetAnglesForBeacon(spot.lat, spot.lon);
+            state.targetRotY = target.rotY;
+            state.targetRotX = target.rotX;
+            state.isRecentering = true;
+            state.velY = 0;
+            state.velX = 0;
+            showToast(`Arc sélectionné : ${spot.name} (${spot.note})`);
+          });
+
+          spotsListEl.appendChild(btn);
+        }
+      }
+
+      // =========================================================================
+      // 3. STARFIELD, PROJECTION & GEOMETRY HELPERS
+      // =========================================================================
+      const stars = Array.from({ length: 160 }, (_, idx) => ({
+        xRatio: ((idx * 73) % 1000) / 1000,
+        yRatio: ((idx * 197) % 1000) / 1000,
+        size: (idx % 3 === 0 ? 1.5 : idx % 2 === 0 ? 1.05 : 0.7),
+        baseAlpha: 0.25 + ((idx * 37) % 65) / 100,
+        twinkleSpeed: 0.001 + ((idx * 19) % 25) * 0.0001,
+        phase: idx * 0.85
+      }));
+
+      let toastTimer = null;
+      function showToast(message) {
+        if (!toastEl) return;
+        toastEl.textContent = message;
+        toastEl.classList.remove('opacity-0', 'translate-y-2');
+        toastEl.classList.add('opacity-100', 'translate-y-0');
+
+        if (toastTimer) {
+          clearTimeout(toastTimer);
+        }
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove('opacity-100', 'translate-y-0');
+          toastEl.classList.add('opacity-0', 'translate-y-2');
+        }, 2600);
+      }
+
+      function resizeCanvas() {
+        const rect = wrapper.getBoundingClientRect();
+        state.width = Math.max(1, Math.floor(rect.width));
+        state.height = Math.max(1, Math.floor(rect.height));
+        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        canvas.width = Math.floor(state.width * state.dpr);
+        canvas.height = Math.floor(state.height * state.dpr);
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      }
+
+      function getGlobeRadius() {
+        const minDim = Math.min(state.width, state.height);
+        return Math.max(70, minDim * 0.36) * state.zoom;
+      }
+
+      function getGlobeCenter() {
+        const isWide = state.width >= 1024;
+        // Center the globe fully in the viewport without shifting away from any card
+        const offsetX = 0;
+        const offsetY = isWide ? state.height * 0.01 : 0;
+        return {
+          cx: state.width * 0.5 + offsetX - state.smoothPointerX * 14,
+          cy: state.height * 0.5 + offsetY - state.smoothPointerY * 14
+        };
+      }
+
+      function projectLatLon(latDeg, lonDeg, radius, center, altMult = 1) {
+        const unit = latLonToVec3(latDeg, lonDeg);
+        return projectUnitVec3(unit.x, unit.y, unit.z, radius, center, altMult);
+      }
+
+      function drawStars(time) {
+        ctx.save();
+        const parallaxX = -state.smoothPointerX * 10;
+        const parallaxY = -state.smoothPointerY * 10;
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          const twinkle = 0.65 + 0.35 * Math.sin(time * s.twinkleSpeed + s.phase);
+          const alpha = Math.max(0.05, Math.min(1, s.baseAlpha * twinkle));
+          const sx = s.xRatio * state.width + parallaxX * (0.4 + s.size * 0.25);
+          const sy = s.yRatio * state.height + parallaxY * (0.4 + s.size * 0.25);
+
+          ctx.beginPath();
+          ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(224, 242, 254, ${alpha.toFixed(3)})`;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // =========================================================================
+      // 4. GLOBE, CARTOGRAPHY, GREAT-CIRCLE ARCS & BEACON RENDERERS
+      // =========================================================================
+      function drawAtmosphereAndSphere(radius, center) {
+        // Brighter outer atmospheric halo for a luminous blog aesthetic
+        const outerGlow = ctx.createRadialGradient(
+          center.cx - radius * 0.28,
+          center.cy - radius * 0.28,
+          radius * 0.86,
+          center.cx,
+          center.cy,
+          radius * 1.28
+        );
+        outerGlow.addColorStop(0, 'rgba(125, 211, 252, 0.36)');
+        outerGlow.addColorStop(0.45, 'rgba(56, 189, 248, 0.18)');
+        outerGlow.addColorStop(0.75, 'rgba(52, 211, 153, 0.09)');
+        outerGlow.addColorStop(1, 'rgba(8, 17, 30, 0)');
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(center.cx, center.cy, radius * 1.28, 0, Math.PI * 2);
+        ctx.fillStyle = outerGlow;
+        ctx.fill();
+
+        // Clip inside Earth sphere for ocean, graticule, continents, and directional lighting
+        ctx.beginPath();
+        ctx.arc(center.cx, center.cy, radius, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Luminous ocean gradient with strong directional key light from upper-left
+        const oceanGrad = ctx.createRadialGradient(
+          center.cx - radius * 0.38,
+          center.cy - radius * 0.36,
+          radius * 0.06,
+          center.cx + radius * 0.1,
+          center.cy + radius * 0.12,
+          radius * 1.14
+        );
+        oceanGrad.addColorStop(0, '#3b82f6');
+        oceanGrad.addColorStop(0.35, '#1d5fa3');
+        oceanGrad.addColorStop(0.72, '#143c6b');
+        oceanGrad.addColorStop(1, '#0c2342');
+
+        ctx.fillStyle = oceanGrad;
+        ctx.fillRect(center.cx - radius - 4, center.cy - radius - 4, radius * 2 + 8, radius * 2 + 8);
+
+        // Soft directional daylight highlight sweep on upper-left hemisphere
+        const keyLightGrad = ctx.createRadialGradient(
+          center.cx - radius * 0.45,
+          center.cy - radius * 0.42,
+          radius * 0.02,
+          center.cx - radius * 0.22,
+          center.cy - radius * 0.2,
+          radius * 0.92
+        );
+        keyLightGrad.addColorStop(0, 'rgba(186, 230, 253, 0.28)');
+        keyLightGrad.addColorStop(0.55, 'rgba(125, 211, 252, 0.09)');
+        keyLightGrad.addColorStop(1, 'rgba(125, 211, 252, 0)');
+        ctx.fillStyle = keyLightGrad;
+        ctx.fillRect(center.cx - radius - 4, center.cy - radius - 4, radius * 2 + 8, radius * 2 + 8);
+
+        // Draw graticule (parallels & meridians)
+        drawGraticule(radius, center);
+
+        // Draw continents & New Caledonia archipelago
+        drawContinents(radius, center);
+
+        // Draw hypsometric relief ridges, rivers & Maidenhead locator grid
+        drawCartographicDetails(radius, center);
+
+        // Balanced spherical shading: bright lit hemisphere, gentle limb falloff so dark side stays legible
+        const rimGrad = ctx.createRadialGradient(
+          center.cx - radius * 0.34,
+          center.cy - radius * 0.34,
+          radius * 0.48,
+          center.cx,
+          center.cy,
+          radius
+        );
+        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.06)');
+        rimGrad.addColorStop(0.74, 'rgba(15, 35, 66, 0.08)');
+        rimGrad.addColorStop(1, 'rgba(5, 14, 28, 0.46)');
+        ctx.fillStyle = rimGrad;
+        ctx.fillRect(center.cx - radius - 4, center.cy - radius - 4, radius * 2 + 8, radius * 2 + 8);
+
+        ctx.restore();
+
+        // Crisp luminous rim stroke
+        ctx.beginPath();
+        ctx.arc(center.cx, center.cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.52)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      function drawGraticule(radius, center) {
+        ctx.save();
+
+        // Fine 15° graticule grid + emphasized 30° & Equator/Prime/165°E reference lines
+        for (let lat = -75; lat <= 75; lat += 15) {
+          const isMajor = lat % 30 === 0;
+          const isEquator = lat === 0;
+          ctx.beginPath();
+          let started = false;
+          for (let lon = -180; lon <= 180; lon += 3) {
+            const p = projectLatLon(lat, lon, radius, center);
+            if (p.z >= 0) {
+              if (!started) {
+                ctx.moveTo(p.x, p.y);
+                started = true;
+              } else {
+                ctx.lineTo(p.x, p.y);
+              }
+            } else {
+              started = false;
+            }
+          }
+          ctx.lineWidth = isEquator ? 1.15 : isMajor ? 0.85 : 0.55;
+          ctx.strokeStyle = isEquator
+            ? 'rgba(224, 242, 254, 0.42)'
+            : isMajor
+              ? 'rgba(186, 230, 253, 0.22)'
+              : 'rgba(186, 230, 253, 0.10)';
+          ctx.stroke();
+        }
+
+        // Meridians every 15 degrees (-180 to +165)
+        for (let lon = -180; lon < 180; lon += 15) {
+          const isMajor = lon % 30 === 0;
+          const isRegional = lon === 165 || lon === 180;
+          ctx.beginPath();
+          let started = false;
+          for (let lat = -84; lat <= 84; lat += 3) {
+            const p = projectLatLon(lat, lon, radius, center);
+            if (p.z >= 0) {
+              if (!started) {
+                ctx.moveTo(p.x, p.y);
+                started = true;
+              } else {
+                ctx.lineTo(p.x, p.y);
+              }
+            } else {
+              started = false;
+            }
+          }
+          ctx.lineWidth = isRegional ? 1.0 : isMajor ? 0.85 : 0.55;
+          ctx.strokeStyle = isRegional
+            ? 'rgba(110, 231, 183, 0.26)'
+            : isMajor
+              ? 'rgba(186, 230, 253, 0.22)'
+              : 'rgba(186, 230, 253, 0.10)';
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function drawContinents(radius, center) {
+        ctx.save();
+
+        // Multi-scale stroke weight that stays sharp when zooming into Mont Do / Nouvelle-Calédonie
+        const zoomScale = Math.sqrt(Math.max(0.6, state.zoom));
+
+        for (let i = 0; i < activeLandPolygons.length; i++) {
+          const item = activeLandPolygons[i];
+          const poly = item.coords;
+          if (!poly || poly.length < 3) continue;
+
+          const isNewCaledonia = Boolean(item.isNewCaledonia);
+          const isSmallFeature = (item.areaHint || 1) < 1.2;
+
+          // Subdivide long edges so spherical curvature and coastlines stay smooth at all zoom levels
+          const stepsPerEdge = isNewCaledonia ? 8 : isSmallFeature ? 4 : 2;
+          const pts = [];
+          for (let j = 0; j < poly.length; j++) {
+            const [lon1, lat1] = poly[j];
+            const [lon2, lat2] = poly[(j + 1) % poly.length];
+            // Skip antimeridian wrap jumps on global polygons
+            if (Math.abs(lon2 - lon1) > 180) {
+              pts.push(projectLatLon(lat1, lon1, radius, center));
+              continue;
+            }
+            for (let s = 0; s < stepsPerEdge; s++) {
+              const t = s / stepsPerEdge;
+              const lat = lat1 + (lat2 - lat1) * t;
+              const lon = lon1 + (lon2 - lon1) * t;
+              pts.push(projectLatLon(lat, lon, radius, center));
+            }
+          }
+
+          // Check if any vertex is on the front hemisphere
+          const hasFrontVertex = pts.some((pt) => pt.z > -radius * 0.14);
+          if (!hasFrontVertex) continue;
+
+          ctx.beginPath();
+          let moved = false;
+          for (let k = 0; k < pts.length; k++) {
+            const pt = pts[k];
+            if (!moved) {
+              ctx.moveTo(pt.x, pt.y);
+              moved = true;
+            } else {
+              ctx.lineTo(pt.x, pt.y);
+            }
+          }
+          ctx.closePath();
+
+          // Hypsometric-inspired coastal & landmass tinting with luminous balance
+          ctx.fillStyle = isNewCaledonia
+            ? 'rgba(110, 231, 183, 0.74)'
+            : 'rgba(134, 219, 196, 0.62)';
+          ctx.fill();
+
+          // 1. Subtle coastal bathymetric / shelf glow behind the shoreline
+          ctx.save();
+          ctx.strokeStyle = isNewCaledonia
+            ? 'rgba(52, 211, 153, 0.34)'
+            : 'rgba(125, 211, 252, 0.20)';
+          ctx.lineWidth = (isNewCaledonia ? 5.2 : 3.2) * zoomScale;
+          ctx.stroke();
+          ctx.restore();
+
+          // 2. Crisp, anti-aliased primary coastline stroke
+          ctx.strokeStyle = isNewCaledonia
+            ? 'rgba(236, 253, 245, 0.99)'
+            : 'rgba(224, 247, 240, 0.88)';
+          ctx.lineWidth = (isNewCaledonia ? 2.15 : 1.2) * zoomScale;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      /**
+       * Renders relief mountain ridges, hydrographic lines, and Maidenhead grid cells
+       * (field RG38 and square RG38AF around Boulouparis / Mont Do).
+       */
+      function drawCartographicDetails(radius, center) {
+        ctx.save();
+
+        // 1. Mountain relief ridges (hypsometric elevation accents)
+        for (let r = 0; r < RELIEF_RIDGES.length; r++) {
+          const ridge = RELIEF_RIDGES[r];
+          const isNCRidge = r === 0;
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i < ridge.length - 1; i++) {
+            const [lon1, lat1] = ridge[i];
+            const [lon2, lat2] = ridge[i + 1];
+            const steps = isNCRidge ? 8 : 5;
+            for (let s = 0; s <= steps; s++) {
+              const t = s / steps;
+              const p = projectLatLon(
+                lat1 + (lat2 - lat1) * t,
+                lon1 + (lon2 - lon1) * t,
+                radius,
+                center,
+                1.0025
+              );
+              if (p.z >= 0) {
+                if (!started) {
+                  ctx.moveTo(p.x, p.y);
+                  started = true;
+                } else {
+                  ctx.lineTo(p.x, p.y);
+                }
+              } else {
+                started = false;
+              }
+            }
+          }
+          ctx.strokeStyle = isNCRidge
+            ? 'rgba(253, 230, 138, 0.72)'
+            : 'rgba(254, 240, 138, 0.42)';
+          ctx.lineWidth = isNCRidge ? 1.85 : 1.15;
+          ctx.setLineDash(isNCRidge ? [] : [3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // 2. Hydrographic river lines
+        for (let h = 0; h < HYDRO_RIVERS.length; h++) {
+          const river = HYDRO_RIVERS[h];
+          const isLocal = h === 1;
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i < river.length - 1; i++) {
+            const [lon1, lat1] = river[i];
+            const [lon2, lat2] = river[i + 1];
+            for (let s = 0; s <= 5; s++) {
+              const t = s / 5;
+              const p = projectLatLon(
+                lat1 + (lat2 - lat1) * t,
+                lon1 + (lon2 - lon1) * t,
+                radius,
+                center,
+                1.0012
+              );
+              if (p.z >= 0) {
+                if (!started) {
+                  ctx.moveTo(p.x, p.y);
+                  started = true;
+                } else {
+                  ctx.lineTo(p.x, p.y);
+                }
+              } else {
+                started = false;
+              }
+            }
+          }
+          ctx.strokeStyle = isLocal
+            ? 'rgba(125, 211, 252, 0.75)'
+            : 'rgba(147, 197, 253, 0.48)';
+          ctx.lineWidth = isLocal ? 1.3 : 0.95;
+          ctx.stroke();
+        }
+
+        // 3. Maidenhead Field RG38 (20° lon x 10° lat: 160°E..180°E, -30°S..-20°S)
+        const fieldCorners = [
+          projectLatLon(-20.0, 160.0, radius, center, 1.001),
+          projectLatLon(-20.0, 180.0, radius, center, 1.001),
+          projectLatLon(-30.0, 180.0, radius, center, 1.001),
+          projectLatLon(-30.0, 160.0, radius, center, 1.001)
+        ];
+        if (fieldCorners.every((c) => c.z > 0)) {
+          ctx.beginPath();
+          ctx.moveTo(fieldCorners[0].x, fieldCorners[0].y);
+          for (let c = 1; c < fieldCorners.length; c++) {
+            ctx.lineTo(fieldCorners[c].x, fieldCorners[c].y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(110, 231, 183, 0.25)';
+          ctx.lineWidth = 0.9;
+          ctx.setLineDash([5, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // 4. Maidenhead Square RG38AF (2° lon x 1° lat: 166°E..168°E, -22°S..-21°S)
+        if (state.zoom >= 1.05) {
+          const cellCorners = [
+            projectLatLon(-21.0, 166.0, radius, center, 1.0018),
+            projectLatLon(-21.0, 168.0, radius, center, 1.0018),
+            projectLatLon(-22.0, 168.0, radius, center, 1.0018),
+            projectLatLon(-22.0, 166.0, radius, center, 1.0018)
+          ];
+          if (cellCorners.every((c) => c.z > 0)) {
+            ctx.beginPath();
+            ctx.moveTo(cellCorners[0].x, cellCorners[0].y);
+            for (let c = 1; c < cellCorners.length; c++) {
+              ctx.lineTo(cellCorners[c].x, cellCorners[c].y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(110, 231, 183, 0.58)';
+            ctx.lineWidth = 1.15;
+            ctx.setLineDash([4, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Locator square tag inside RG38AF when zoomed in
+            if (state.zoom >= 1.25) {
+              const tagPos = projectLatLon(-21.18, 166.12, radius, center, 1.002);
+              if (tagPos.z > 0) {
+                ctx.font = '600 9.5px "JetBrains Mono", monospace';
+                ctx.fillStyle = 'rgba(167, 243, 208, 0.85)';
+                ctx.fillText('LOCATOR RG38AF', tagPos.x, tagPos.y);
+              }
+            }
+          }
+        }
+
+        ctx.restore();
+      }
+
+      /**
+       * Computes a 3D spherical surface ring around (latDeg, lonDeg) with angular radius `angularRadiusDeg`
+       * and draws only the visible front-facing segments for crisp radio-wave propagation rings.
+       */
+      function drawSphericalWaveRing(latDeg, lonDeg, angularRadiusDeg, radius, center, strokeStyle, lineWidth) {
+        const centerVec = latLonToVec3(latDeg, lonDeg);
+        const upRef = Math.abs(centerVec.y) < 0.9 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
+
+        // Tangent basis vectors u, v perpendicular to centerVec
+        const u = normalizeVec3(crossVec3(upRef, centerVec));
+        const v = crossVec3(centerVec, u);
+
+        const cosAng = Math.cos(angularRadiusDeg * DEG2RAD);
+        const sinAng = Math.sin(angularRadiusDeg * DEG2RAD);
+
+        const segments = 64;
+        ctx.save();
+        ctx.beginPath();
+        let drawing = false;
+
+        for (let i = 0; i <= segments; i++) {
+          const theta = (i / segments) * Math.PI * 2;
+          const cosT = Math.cos(theta);
+          const sinT = Math.sin(theta);
+
+          // Point on unit sphere at angular distance `angularRadiusDeg` from beacon
+          const px = centerVec.x * cosAng + (u.x * cosT + v.x * sinT) * sinAng;
+          const py = centerVec.y * cosAng + (u.y * cosT + v.y * sinT) * sinAng;
+          const pz = centerVec.z * cosAng + (u.z * cosT + v.z * sinT) * sinAng;
+
+          const proj = projectUnitVec3(px, py, pz, radius, center, 1.004);
+          if (proj.z >= 0) {
+            if (!drawing) {
+              ctx.moveTo(proj.x, proj.y);
+              drawing = true;
+            } else {
+              ctx.lineTo(proj.x, proj.y);
+            }
+          } else {
+            drawing = false;
+          }
+        }
+
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function latLonToVec3(latDeg, lonDeg) {
+        const lat = latDeg * DEG2RAD;
+        const lon = lonDeg * DEG2RAD;
+        const cosLat = Math.cos(lat);
+        return {
+          x: cosLat * Math.sin(lon),
+          y: -Math.sin(lat),
+          z: cosLat * Math.cos(lon)
+        };
+      }
+
+      function crossVec3(a, b) {
+        return {
+          x: a.y * b.z - a.z * b.y,
+          y: a.z * b.x - a.x * b.z,
+          z: a.x * b.y - a.y * b.x
+        };
+      }
+
+      function normalizeVec3(v) {
+        const len = Math.hypot(v.x, v.y, v.z) || 1;
+        return { x: v.x / len, y: v.y / len, z: v.z / len };
+      }
+
+      /**
+       * Spherical linear interpolation (SLERP) along the great circle between two unit vectors,
+       * elevated slightly above the globe surface (`altBoost`) to suggest ionospheric / skywave arc.
+       */
+      function drawGreatCircleArc(fromLat, fromLon, toLat, toLon, radius, center, time, options = {}) {
+        const v0 = normalizeVec3(latLonToVec3(fromLat, fromLon));
+        const v1 = normalizeVec3(latLonToVec3(toLat, toLon));
+
+        const dot = Math.max(-1, Math.min(1, v0.x * v1.x + v0.y * v1.y + v0.z * v1.z));
+        const omega = Math.acos(dot);
+        if (omega < 0.0001) return;
+
+        const sinOmega = Math.sin(omega);
+        const steps = 72;
+        const maxLift = options.maxLift ?? 0.14;
+        const isHighlighted = Boolean(options.highlighted);
+        const isDimmed = Boolean(options.dimmed);
+        const isUS = Boolean(options.isUS);
+        const isEurope = Boolean(options.isEurope);
+
+        const points = [];
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const w0 = Math.sin((1 - t) * omega) / sinOmega;
+          const w1 = Math.sin(t * omega) / sinOmega;
+
+          const ux = v0.x * w0 + v1.x * w1;
+          const uy = v0.y * w0 + v1.y * w1;
+          const uz = v0.z * w0 + v1.z * w1;
+
+          // Parabolic elevation peak at t = 0.5 so the arc rises gracefully above the surface
+          const arcLift = 1 + Math.sin(t * Math.PI) * maxLift;
+          const proj = projectUnitVec3(ux, uy, uz, radius, center, arcLift);
+          points.push({ ...proj, t });
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        let drawing = false;
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          if (p.z >= -radius * 0.05) {
+            if (!drawing) {
+              ctx.moveTo(p.x, p.y);
+              drawing = true;
+            } else {
+              ctx.lineTo(p.x, p.y);
+            }
+          } else {
+            drawing = false;
+          }
+        }
+
+        if (isHighlighted) {
+          ctx.strokeStyle = isUS
+            ? 'rgba(209, 250, 229, 1)'
+            : isEurope
+              ? 'rgba(255, 237, 213, 1)'
+              : 'rgba(255, 253, 210, 1)';
+          ctx.lineWidth = 3.4;
+          ctx.shadowColor = isUS
+            ? 'rgba(52, 211, 153, 0.98)'
+            : isEurope
+              ? 'rgba(251, 146, 60, 0.98)'
+              : 'rgba(250, 204, 21, 0.98)';
+          ctx.shadowBlur = 14;
+        } else if (isDimmed) {
+          ctx.strokeStyle = isUS
+            ? 'rgba(52, 211, 153, 0.36)'
+            : isEurope
+              ? 'rgba(251, 146, 60, 0.38)'
+              : 'rgba(253, 224, 71, 0.36)';
+          ctx.lineWidth = 1.4;
+          ctx.shadowBlur = 0;
+        } else if (isUS) {
+          ctx.strokeStyle = 'rgba(110, 231, 183, 0.96)';
+          ctx.lineWidth = 2.15;
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.82)';
+          ctx.shadowBlur = 10;
+        } else if (isEurope) {
+          ctx.strokeStyle = 'rgba(253, 186, 116, 0.98)';
+          ctx.lineWidth = 2.2;
+          ctx.shadowColor = 'rgba(249, 115, 22, 0.86)';
+          ctx.shadowBlur = 11;
+        } else {
+          ctx.strokeStyle = 'rgba(254, 240, 138, 0.96)';
+          ctx.lineWidth = 2.15;
+          ctx.shadowColor = 'rgba(250, 204, 21, 0.78)';
+          ctx.shadowBlur = 10;
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Animated signal pulse traveling along the arc from FK5ZDC to the listener
+        if (!isDimmed) {
+          const pulseT = ((time * 0.00038) + (options.phaseOffset || 0)) % 1;
+          const pulseIdx = Math.min(points.length - 1, Math.floor(pulseT * points.length));
+          const pulsePt = points[pulseIdx];
+          if (pulsePt && pulsePt.z > 4) {
+            ctx.beginPath();
+            ctx.arc(pulsePt.x, pulsePt.y, isHighlighted ? 5.4 : 3.8, 0, Math.PI * 2);
+            ctx.fillStyle = isUS ? '#ecfdf5' : isEurope ? '#fff7ed' : '#fefce8';
+            ctx.shadowColor = isUS ? '#34d399' : isEurope ? '#fb923c' : '#facc15';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function drawReceptionArcsAndSpots(radius, center, time) {
+        if (!state.showArcs) return;
+
+        const placedLabelBoxes = [];
+        // Sort visible spots so selected or closer-to-center points get label priority, while displaying all non-overlapping names
+        const orderedIndices = RECEPTION_SPOTS.map((_, idx) => idx).sort((a, b) => {
+          if (RECEPTION_SPOTS[a].id === state.selectedSpotId) return -1;
+          if (RECEPTION_SPOTS[b].id === state.selectedSpotId) return 1;
+          const pa = projectLatLon(RECEPTION_SPOTS[a].lat, RECEPTION_SPOTS[a].lon, radius, center, 1.004);
+          const pb = projectLatLon(RECEPTION_SPOTS[b].lat, RECEPTION_SPOTS[b].lon, radius, center, 1.004);
+          return pb.z - pa.z;
+        });
+
+        for (let k = 0; k < orderedIndices.length; k++) {
+          const i = orderedIndices[k];
+          const spot = RECEPTION_SPOTS[i];
+          const isSelected = state.selectedSpotId === spot.id;
+          const isDimmed = Boolean(state.selectedSpotId && !isSelected);
+
+          drawGreatCircleArc(
+            BEACON.lat,
+            BEACON.lon,
+            spot.lat,
+            spot.lon,
+            radius,
+            center,
+            time,
+            {
+              isUS: spot.category === 'État US',
+              isEurope: Boolean(spot.isEurope),
+              highlighted: isSelected,
+              dimmed: isDimmed,
+              phaseOffset: i * 0.14
+            }
+          );
+
+          const targetProj = projectLatLon(spot.lat, spot.lon, radius, center, 1.004);
+          if (targetProj.z > 0) {
+            const fade = Math.max(0.45, Math.min(1, targetProj.z / (radius * 0.22)));
+            const alpha = isDimmed ? 0.34 * fade : fade;
+            const displayLabel = spot.regionLabel || spot.name;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(targetProj.x, targetProj.y, isSelected ? 5.0 : 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = isSelected
+              ? `rgba(254, 240, 138, ${(0.98 * alpha).toFixed(3)})`
+              : spot.category === 'État US'
+                ? `rgba(56, 189, 248, ${(0.96 * alpha).toFixed(3)})`
+                : spot.isEurope
+                  ? `rgba(251, 146, 60, ${(0.98 * alpha).toFixed(3)})`
+                  : `rgba(110, 231, 183, ${(0.96 * alpha).toFixed(3)})`;
+            ctx.fill();
+
+            if (alpha > 0.15) {
+              const fontSize = isSelected
+                ? 12.5
+                : Math.max(10, Math.min(12.2, 10.4 * Math.sqrt(state.zoom)));
+              ctx.font = isSelected
+                ? `700 ${fontSize.toFixed(1)}px "JetBrains Mono", monospace`
+                : `600 ${fontSize.toFixed(1)}px Inter, sans-serif`;
+
+              const textX = targetProj.x + 7;
+              const textY = targetProj.y + 3.5;
+              const textW = ctx.measureText(displayLabel).width;
+              const box = {
+                left: textX - 3,
+                right: textX + textW + 3,
+                top: textY - fontSize + 1,
+                bottom: textY + 4
+              };
+
+              const overlapsExisting = placedLabelBoxes.some(
+                (b) =>
+                  box.left < b.right &&
+                  box.right > b.left &&
+                  box.top < b.bottom &&
+                  box.bottom > b.top
+              );
+
+              if (isSelected || !overlapsExisting) {
+                placedLabelBoxes.push(box);
+
+                ctx.fillStyle = isSelected
+                  ? `rgba(9, 17, 31, ${(0.94 * alpha).toFixed(3)})`
+                  : `rgba(7, 14, 26, ${(0.82 * alpha).toFixed(3)})`;
+                ctx.strokeStyle = isSelected
+                  ? `rgba(250, 204, 21, ${(0.9 * alpha).toFixed(3)})`
+                  : `rgba(148, 163, 184, ${(0.34 * alpha).toFixed(3)})`;
+                ctx.lineWidth = 0.85;
+                roundRectPath(
+                  ctx,
+                  box.left,
+                  box.top,
+                  box.right - box.left,
+                  box.bottom - box.top,
+                  4
+                );
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = isSelected
+                  ? `rgba(254, 249, 195, ${(1 * alpha).toFixed(3)})`
+                  : `rgba(248, 250, 252, ${(0.98 * alpha).toFixed(3)})`;
+                ctx.fillText(displayLabel, textX, textY);
+              }
+            }
+            ctx.restore();
+          }
+        }
+      }
+
+      function renderSpotsListUI() {
+        const countStr = String(RECEPTION_SPOTS.length);
+        if (spotsCountEl) spotsCountEl.textContent = countStr;
+        if (topSpotsCountEl) topSpotsCountEl.textContent = countStr;
+        spotsCountMirrors.forEach((el) => {
+          el.textContent = countStr;
+        });
+
+        const containers = [spotsListEl, spotsListMobileEl].filter(Boolean);
+        if (containers.length === 0) return;
+
+        for (const container of containers) {
+          container.innerHTML = '';
+
+          for (const spot of RECEPTION_SPOTS) {
+            const isSelected = state.selectedSpotId === spot.id;
+            const displayLabel = spot.regionLabel || spot.name;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `spot-chip text-[11px] px-2 py-1 rounded-lg border font-medium flex items-center gap-1.5 ${
+              isSelected
+                ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
+                : 'bg-slate-800/75 border-slate-700/80 text-slate-200 hover:border-sky-400/50 hover:text-sky-200'
+            }`;
+            btn.title = `${displayLabel} (${spot.category}) — ${spot.note}`;
+            btn.innerHTML = `
+              <span class="h-1.5 w-1.5 rounded-full shrink-0 ${spot.category === 'État US' ? 'bg-sky-400' : 'bg-emerald-400'}"></span>
+              <span>${displayLabel}</span>
+              <span class="text-[9.5px] text-slate-400">${spot.category}</span>
+            `;
+
+            btn.addEventListener('click', () => {
+              if (state.selectedSpotId === spot.id) {
+                state.selectedSpotId = null;
+                clearSpotFocusBtns.forEach((b) => b.classList.add('hidden'));
+                renderSpotsListUI();
+                showToast('Affichage de tous les arcs de réception');
+                return;
+              }
+              state.selectedSpotId = spot.id;
+              clearSpotFocusBtns.forEach((b) => b.classList.remove('hidden'));
+              renderSpotsListUI();
+              const target = getTargetAnglesForBeacon(spot.lat, spot.lon);
+              state.targetRotY = target.rotY;
+              state.targetRotX = target.rotX;
+              state.isRecentering = true;
+              state.velY = 0;
+              state.velX = 0;
+              showToast(`${displayLabel} (${spot.category}) · ${spot.note}`);
+            });
+
+            container.appendChild(btn);
+          }
+        }
+      }
+
+      function projectUnitVec3(x, y, z, radius, center, altMult = 1) {
+        const r = radius * altMult;
+        const px = x * r;
+        const py = y * r;
+        const pz = z * r;
+
+        const cosY = Math.cos(state.rotY + state.smoothPointerX * 0.06);
+        const sinY = Math.sin(state.rotY + state.smoothPointerX * 0.06);
+        const x1 = px * cosY + pz * sinY;
+        const z1 = -px * sinY + pz * cosY;
+
+        const pitch = Math.max(-1.35, Math.min(1.35, state.rotX + state.smoothPointerY * 0.05));
+        const cosX = Math.cos(pitch);
+        const sinX = Math.sin(pitch);
+        const y2 = py * cosX - z1 * sinX;
+        const z2 = py * sinX + z1 * cosX;
+
+        return {
+          x: center.cx + x1,
+          y: center.cy + y2,
+          z: z2
+        };
+      }
+
+      function drawBeaconAndMarkers(radius, center, time) {
+        // Secondary regional / reference markers
+        for (let i = 1; i < GEO_MARKERS.length; i++) {
+          const m = GEO_MARKERS[i];
+          const p = projectLatLon(m.lat, m.lon, radius, center, 1.002);
+          if (p.z > 4) {
+            const fade = Math.min(1, p.z / (radius * 0.35));
+            const isRegional = Boolean(m.regional);
+            const isReliefPeak = m.feature === 'peak' || m.feature === 'relief';
+            if (isRegional && state.zoom < 1.12) continue;
+            if (isReliefPeak && state.zoom < 1.28) continue;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, isReliefPeak ? 2.4 : isRegional ? 2.1 : 2.6, 0, Math.PI * 2);
+            ctx.fillStyle = isReliefPeak
+              ? `rgba(253, 230, 138, ${(0.9 * fade).toFixed(3)})`
+              : isRegional
+                ? `rgba(167, 243, 208, ${(0.86 * fade).toFixed(3)})`
+                : `rgba(186, 230, 253, ${(0.80 * fade).toFixed(3)})`;
+            ctx.fill();
+
+            if (state.zoom > 1.25 || (!isRegional && i <= 12) || (isRegional && state.zoom >= 1.32)) {
+              ctx.font = isReliefPeak
+                ? '500 9.5px "JetBrains Mono", monospace'
+                : isRegional
+                  ? '500 10px Inter, sans-serif'
+                  : '500 10.5px Inter, sans-serif';
+              ctx.fillStyle = isReliefPeak
+                ? `rgba(254, 240, 138, ${(0.9 * fade).toFixed(3)})`
+                : isRegional
+                  ? `rgba(209, 250, 229, ${(0.9 * fade).toFixed(3)})`
+                  : `rgba(226, 232, 240, ${(0.84 * fade).toFixed(3)})`;
+              ctx.fillText(m.label, p.x + 6, p.y + 3);
+            }
+          }
+        }
+
+        // Primary FK5ZDC beacon at Mont Do, Boulouparis
+        const beaconProj = projectLatLon(BEACON.lat, BEACON.lon, radius, center, 1.004);
+        if (beaconProj.z > -radius * 0.05) {
+          const frontVisibility = Math.max(0, Math.min(1, (beaconProj.z + radius * 0.05) / (radius * 0.25)));
+
+          // Expanding radio propagation wave rings (10m band feel)
+          const numRings = 4;
+          const cycleDuration = 4.2; // seconds per full wave expansion
+          const maxAngleDeg = 46; // spherical angular radius of propagation ring
+
+          for (let rIdx = 0; rIdx < numRings; rIdx++) {
+            const phase = ((time * 0.001 / cycleDuration) + rIdx / numRings) % 1;
+            const angleDeg = 2.5 + phase * maxAngleDeg;
+            const alpha = (1 - phase) * 0.72 * frontVisibility;
+            if (alpha > 0.02) {
+              const strokeColor = rIdx % 2 === 0
+                ? `rgba(52, 211, 153, ${alpha.toFixed(3)})`
+                : `rgba(56, 189, 248, ${(alpha * 0.85).toFixed(3)})`;
+              drawSphericalWaveRing(
+                BEACON.lat,
+                BEACON.lon,
+                angleDeg,
+                radius,
+                center,
+                strokeColor,
+                rIdx === 0 ? 1.8 : 1.35
+              );
+            }
+          }
+
+          // Soft halo around Mont Do beacon
+          const haloRadius = 14 + Math.sin(time * 0.005) * 3;
+          const haloGrad = ctx.createRadialGradient(
+            beaconProj.x,
+            beaconProj.y,
+            1,
+            beaconProj.x,
+            beaconProj.y,
+            haloRadius
+          );
+          haloGrad.addColorStop(0, `rgba(110, 231, 183, ${(0.95 * frontVisibility).toFixed(3)})`);
+          haloGrad.addColorStop(0.45, `rgba(16, 185, 129, ${(0.45 * frontVisibility).toFixed(3)})`);
+          haloGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+          ctx.beginPath();
+          ctx.arc(beaconProj.x, beaconProj.y, haloRadius, 0, Math.PI * 2);
+          ctx.fillStyle = haloGrad;
+          ctx.fill();
+
+          // Core beacon pin dot
+          ctx.beginPath();
+          ctx.arc(beaconProj.x, beaconProj.y, 4.2, 0, Math.PI * 2);
+          ctx.fillStyle = '#ecfdf5';
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#10b981';
+          ctx.stroke();
+
+          // Callout tag right beside Mont Do if visible on front hemisphere
+          if (beaconProj.z > 8) {
+            const labelAlpha = Math.min(1, (beaconProj.z - 8) / (radius * 0.25));
+            const tagX = beaconProj.x + 12;
+            const tagY = beaconProj.y - 14;
+
+            ctx.save();
+            ctx.globalAlpha = labelAlpha;
+            ctx.font = '600 12px "JetBrains Mono", monospace';
+            const titleText = 'FK5ZDC · Mont Do';
+            const subText = 'RG38AF · 28,2075 MHz';
+            const boxW = Math.max(ctx.measureText(titleText).width, 134) + 18;
+            const boxH = 36;
+
+            // Leader line
+            ctx.beginPath();
+            ctx.moveTo(beaconProj.x + 4, beaconProj.y - 3);
+            ctx.lineTo(tagX, tagY + boxH * 0.5);
+            ctx.strokeStyle = 'rgba(110, 231, 183, 0.75)';
+            ctx.lineWidth = 1.25;
+            ctx.stroke();
+
+            // Tag pill
+            ctx.fillStyle = 'rgba(9, 17, 31, 0.86)';
+            ctx.strokeStyle = 'rgba(52, 211, 153, 0.55)';
+            ctx.lineWidth = 1;
+            roundRectPath(ctx, tagX, tagY, boxW, boxH, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#6ee7b7';
+            ctx.fillText(titleText, tagX + 9, tagY + 14);
+
+            ctx.font = '500 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText(subText, tagX + 9, tagY + 28);
+            ctx.restore();
+          }
+        }
+      }
+
+      function roundRectPath(context, x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.arcTo(x + w, y, x + w, y + h, radius);
+        context.arcTo(x + w, y + h, x, y + h, radius);
+        context.arcTo(x, y + h, x, y, radius);
+        context.arcTo(x, y, x + w, y, radius);
+        context.closePath();
+      }
+
+      // =========================================================================
+      // 5. ANIMATION LOOP & INTERACTION HANDLERS
+      // =========================================================================
+      let lastFrameTime = performance.now();
+
+      function updatePhysics(dtSec) {
+        // Smooth pointer parallax interpolation
+        state.smoothPointerX += (state.pointerNormX - state.smoothPointerX) * Math.min(1, dtSec * 6);
+        state.smoothPointerY += (state.pointerNormY - state.smoothPointerY) * Math.min(1, dtSec * 6);
+
+        // Smooth zoom interpolation
+        state.zoom += (state.targetZoom - state.zoom) * Math.min(1, dtSec * 9);
+
+        if (state.isRecentering && !state.isDragging) {
+          // Smoothly interpolate rotation toward FK5ZDC at Mont Do
+          const lerpAlpha = Math.min(1, dtSec * 6.5);
+          state.rotY += (state.targetRotY - state.rotY) * lerpAlpha;
+          state.rotX += (state.targetRotX - state.rotX) * lerpAlpha;
+
+          if (
+            Math.abs(state.targetRotY - state.rotY) < 0.0008 &&
+            Math.abs(state.targetRotX - state.rotX) < 0.0008
+          ) {
+            state.rotY = state.targetRotY;
+            state.rotX = state.targetRotX;
+            state.isRecentering = false;
+          }
+        } else if (!state.isDragging) {
+          // Apply drag inertia with smooth damping
+          state.rotY += state.velY;
+          state.rotX += state.velX;
+          state.velY *= Math.pow(0.06, dtSec);
+          state.velX *= Math.pow(0.06, dtSec);
+
+          // Gentle breathing oscillation around current orientation when idle
+          if (state.autoDrift) {
+            state.rotY += Math.sin(state.time * 0.0007) * 0.00032;
+          }
+        }
+
+        // Clamp latitude tilt to avoid flipping over the poles
+        const maxPitch = 1.25;
+        if (state.rotX > maxPitch) {
+          state.rotX = maxPitch;
+          state.velX = 0;
+        } else if (state.rotX < -maxPitch) {
+          state.rotX = -maxPitch;
+          state.velX = 0;
+        }
+      }
+
+      function render(now) {
+        const dtMs = Math.min(50, Math.max(1, now - lastFrameTime));
+        lastFrameTime = now;
+        state.time += dtMs;
+
+        updatePhysics(dtMs / 1000);
+
+        ctx.clearRect(0, 0, state.width, state.height);
+        drawStars(state.time);
+
+        const radius = getGlobeRadius();
+        const center = getGlobeCenter();
+
+        drawAtmosphereAndSphere(radius, center);
+        drawReceptionArcsAndSpots(radius, center, state.time);
+        drawBeaconAndMarkers(radius, center, state.time);
+
+        requestAnimationFrame(render);
+      }
+
+      // Mouse drag rotation
+      canvas.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        state.isDragging = true;
+        state.isRecentering = false;
+        state.lastPointerX = e.clientX;
+        state.lastPointerY = e.clientY;
+        state.velY = 0;
+        state.velX = 0;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        // Update subtle cursor-following parallax
+        const rect = wrapper.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          state.pointerNormX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          state.pointerNormY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+        }
+
+        if (!state.isDragging) return;
+        const dx = e.clientX - state.lastPointerX;
+        const dy = e.clientY - state.lastPointerY;
+        state.lastPointerX = e.clientX;
+        state.lastPointerY = e.clientY;
+
+        const sensitivity = 0.0062 / Math.sqrt(state.zoom);
+        state.rotY += dx * sensitivity;
+        state.rotX += dy * sensitivity;
+        state.velY = dx * sensitivity * 0.45;
+        state.velX = dy * sensitivity * 0.45;
+      });
+
+      window.addEventListener('mouseup', () => {
+        state.isDragging = false;
+      });
+
+      wrapper.addEventListener('mouseleave', () => {
+        state.pointerNormX = 0;
+        state.pointerNormY = 0;
+      });
+
+      // Touch drag & pinch-to-zoom support
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          state.isDragging = true;
+          state.isRecentering = false;
+          state.lastPointerX = e.touches[0].clientX;
+          state.lastPointerY = e.touches[0].clientY;
+          state.velY = 0;
+          state.velX = 0;
+        } else if (e.touches.length === 2) {
+          state.isDragging = false;
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          state.pinchStartDist = Math.hypot(dx, dy);
+          state.pinchStartZoom = state.targetZoom;
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && state.isDragging) {
+          const touch = e.touches[0];
+          const dx = touch.clientX - state.lastPointerX;
+          const dy = touch.clientY - state.lastPointerY;
+          state.lastPointerX = touch.clientX;
+          state.lastPointerY = touch.clientY;
+
+          const sensitivity = 0.0065 / Math.sqrt(state.zoom);
+          state.rotY += dx * sensitivity;
+          state.rotX += dy * sensitivity;
+          state.velY = dx * sensitivity * 0.45;
+          state.velX = dy * sensitivity * 0.45;
+        } else if (e.touches.length === 2 && state.pinchStartDist) {
+          e.preventDefault();
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.hypot(dx, dy);
+          const nextZoom = state.pinchStartZoom * (dist / state.pinchStartDist);
+          state.targetZoom = Math.max(state.minZoom, Math.min(state.maxZoom, nextZoom));
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', () => {
+        state.isDragging = false;
+        state.pinchStartDist = null;
+      });
+
+      // Mouse wheel zoom
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+        state.targetZoom = Math.max(state.minZoom, Math.min(state.maxZoom, state.targetZoom * zoomFactor));
+      }, { passive: false });
+
+      // Toolbar controls
+      toggleBtn.addEventListener('click', () => {
+        const isNowHidden = infoCard.classList.toggle('hidden');
+        toggleBtn.setAttribute('aria-expanded', String(!isNowHidden));
+        toggleLabel.textContent = isNowHidden ? 'Infos' : 'Fermer';
+      });
+
+      if (toggleSpotsBtn && spotsCard) {
+        toggleSpotsBtn.addEventListener('click', () => {
+          const isSpotsHidden = spotsCard.classList.toggle('hidden');
+          toggleSpotsBtn.setAttribute('aria-expanded', String(!isSpotsHidden));
+          showToast(isSpotsHidden ? 'Liste des écoutes masquée' : 'Liste des écoutes affichée');
+        });
+      }
+
+      zoomInBtn.addEventListener('click', () => {
+        state.isRecentering = false;
+        state.targetZoom = Math.min(state.maxZoom, state.targetZoom * 1.22);
+      });
+
+      zoomOutBtn.addEventListener('click', () => {
+        state.isRecentering = false;
+        state.targetZoom = Math.max(state.minZoom, state.targetZoom * 0.82);
+      });
+
+      centerBtn.addEventListener('click', () => {
+        const target = getTargetAnglesForBeacon(BEACON.lat, BEACON.lon);
+        state.targetRotY = target.rotY;
+        state.targetRotX = target.rotX;
+        state.targetZoom = 1.15;
+        state.isRecentering = true;
+        state.velY = 0;
+        state.velX = 0;
+        showToast('Recentré sur FK5ZDC · Mont Do (RG38AF)');
+      });
+
+      toggleArcsBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.showArcs = !state.showArcs;
+          toggleArcsBtns.forEach((b) => {
+            b.textContent = state.showArcs ? 'Arcs actifs' : 'Arcs masqués';
+          });
+          showToast(state.showArcs ? 'Arcs de réception affichés' : 'Arcs de réception masqués');
+        });
+      });
+
+      clearSpotFocusBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.selectedSpotId = null;
+          clearSpotFocusBtns.forEach((b) => b.classList.add('hidden'));
+          renderSpotsListUI();
+          showToast('Tous les arcs de réception affichés');
+        });
+      });
+
+      window.addEventListener('resize', resizeCanvas);
+
+      // Initialize and start loop
+      resizeCanvas();
+      renderSpotsListUI();
+      upgradeCoastlineResolution();
+      requestAnimationFrame(render);
+    })();
+  </script>
+</body>
+</html>
